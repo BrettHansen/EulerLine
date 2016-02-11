@@ -10,12 +10,15 @@
     <title>Euler Line</title>
   </head>
 
-	<body>
-    <h2>Euler Line</h2>
-            
-	<canvas id="drawingCanvas" height="200" width="1200">
-      Your browser does not support HTML5 Canvas.
-    </canvas>
-    <script src="euler.js"></script>
+	<body onresize="resize()">
+        <h2>Euler Line</h2>
+                
+    	<canvas id="drawingCanvas" height="500" width="500">
+          Your browser does not support HTML5 Canvas.
+        </canvas>
+        <script src="euler.js"></script>
+        <script type="text/javascript">
+            resize();
+        </script>
 	</body>
 </html>
