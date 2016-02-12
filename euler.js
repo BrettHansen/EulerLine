@@ -34,6 +34,10 @@ function initialize() {
   canvas.addEventListener('mousedown', mousedownListener, false);
   canvas.addEventListener('mousemove', mousemoveListener, false);
   canvas.addEventListener('mouseup', mouseupListener, false);
+  // Mobile
+  canvas.addEventListener('touchstart', mousedownListener, false);
+  canvas.addEventListener('touchmove', mousemoveListener, false);
+  canvas.addEventListener('touchend', mouseupListener, false);
   updateVars();
   drawCanvas();
 }
