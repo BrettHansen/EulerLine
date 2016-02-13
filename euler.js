@@ -1,3 +1,5 @@
+// Creates object accessible with .x and .y parameters and
+// deep copy function
 function Point(x, y) {
   this.x = x;
   this.y = y;
@@ -12,16 +14,9 @@ var context;
 var image;
 
 // Static Variables
-var color_black = [0, 0, 0, 255];
-var color_grey  = [150, 150, 150, 255];
-var color_white = [255, 255, 255, 255];
-var color_red   = [255, 0, 0, 255];
-var color_green = [0, 255, 0, 255];
-var color_blue  = [0, 0, 255, 255];
-
 var vertRadius = 8;
 var nodeRadius = 5;
-var tolerance = 2;
+var tolerance = 4;
 
 // Runtime Variables
 var verts = new Object();
@@ -35,27 +30,29 @@ var y_height = 3.0;
 var orthoCenter = new Point();
 var circmCenter = new Point();
 var cntrdCenter = new Point();
+var eulerLine = new Object();
+eulerLine.beg = new Point();
+eulerLine.end = new Point();
 
+// Keeping track of last mouse position when dragging
 var draggingKey;
 var draggingLastPos;
 
+// Adds listeners and sets up canvas
 function initialize() {
-  canvas = $('#drawingCanvas')[0];
+  canvas = $('#canvas')[0];
   canvas.style.background = "#EDEDED";
   context = canvas.getContext("2d");
   canvas.addEventListener('mousedown', mousedownListener, false);
   canvas.addEventListener('mousemove', mousemoveListener, false);
   canvas.addEventListener('mouseup', mouseupListener, false);
-  // Mobile
-  canvas.addEventListener('touchstart', mousedownListener, false);
-  canvas.addEventListener('touchmove', mousemoveListener, false);
-  canvas.addEventListener('touchend', mouseupListener, false);
+  canvas.addEventListener('mouseout', mouseupListener, false);
   updateVars();
   drawCanvas();
 }
 initialize();
 
-
+// Call whenever mousedown; sets up for dragging
 function mousedownListener(e) {
   if(draggingKey === undefined) {
     var mousePos = getMousePos(e);
@@ -70,10 +67,12 @@ function mousedownListener(e) {
   }
 }
 
+// Simple cartesian distance function
 function dist(p1, p2) {
   return Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
+// Called whenever mouse moves on canvas, but only useful when dragging
 function mousemoveListener(e) {
   if(draggingKey === undefined)
     return;
@@ -86,20 +85,24 @@ function mousemoveListener(e) {
   drawCanvas();
 }
 
+// Stops dragging
 function mouseupListener(e) {
   draggingKey = undefined;
 }
 
+// Convert mouse event to canvas coordiantes
 function getMousePos(e) {
     var bound = canvas.getBoundingClientRect();
     return new Point(e.clientX - bound.left, e.clientY - bound.top);
 }
 
+// Moves the appropriate traingle vertex by a certain amount
 function updateTriangleVertex(change, key) {
   verts[key].x += change.x;
   verts[key].y += change.y;
 }
 
+// Updates the position of the three centers and constructs Euler Line
 function updateVars() {
   // ORTHOCENTER
   var m1 = (verts.c.x - verts.a.x) / (verts.a.y - verts.c.y);
@@ -130,38 +133,62 @@ function updateVars() {
   // CENTROID
   cntrdCenter.x = (verts.a.x + verts.b.x + verts.c.x) / 3;
   cntrdCenter.y = (verts.a.y + verts.b.y + verts.c.y) / 3;
+
+  // EULER LINE
+  if(orthoCenter.x == circmCenter.x) {
+    eulerLine.beg.x = orthoCenter.x;
+    eulerLine.end.x = orthoCenter.x;
+    eulerLine.beg.y = y_bounds.x;
+    eulerLine.end.y = y_bounds.y;
+  } else {
+    var m = (orthoCenter.y - circmCenter.y) / (orthoCenter.x - circmCenter.x);
+    var b = orthoCenter.y - m * orthoCenter.x;
+    if(Math.abs(m) <= 1) {
+      eulerLine.beg.x = x_bounds.x;
+      eulerLine.end.x = x_bounds.y;
+      eulerLine.beg.y = m * eulerLine.beg.x + b;
+      eulerLine.end.y = m * eulerLine.end.x + b;
+    } else {
+      eulerLine.beg.y = y_bounds.x;
+      eulerLine.end.y = y_bounds.y;
+      eulerLine.beg.x = (eulerLine.beg.y - b) / m;
+      eulerLine.end.x = (eulerLine.end.y - b) / m;
+    }
+  }
 }
 
+// Clear then draw
 function drawCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawTriangle();
-  drawTriangleCenters();
-}
-
-function drawTriangle() {
   var coords = [];
   coords.push(verts.a);
   coords.push(verts.b);
   coords.push(verts.c);
 
+  // Euler Line
+  drawLine(eulerLine.beg, eulerLine.end, 2, "#888");
+
+  // Center connectors and triangle sides
   for(var i = 0; i < 3; i++) {
-    drawLine(coords[i], coords[(i + 1) % 3], 3, "#90C3D4");
+    drawLine(coords[i], coords[(i + 1) % 3], 4, "#90C3D4");
     drawLine(coords[i], orthoCenter, 1, "#A1D490");
     drawLine(coords[i], circmCenter, 1, "#D4A190");
     drawLine(coords[i], cntrdCenter, 1, "#C390D4");
   }
+  // Draw vertices on top
   for(var i = 0; i < 3; i++) {
+    drawCircle(coords[i], vertRadius + 2, "#666");
     drawCircle(coords[i], vertRadius, "#90C3D4");
   }
-}
 
-function drawTriangleCenters() {
+  // Draw centers on very top
   drawCircle(orthoCenter, nodeRadius, "#A1D490");
   drawCircle(circmCenter, nodeRadius, "#D4A190");
   drawCircle(cntrdCenter, nodeRadius, "#C390D4");
 }
 
+// Converts from cartesian system (abs) to output canvas system (rel)
 function convertAbsToRelPoint(point) {
   var x = (point.x / x_width + .5) * canvas.width;
   var y = (1 - (point.y / y_height + .5)) * canvas.height;
@@ -169,6 +196,8 @@ function convertAbsToRelPoint(point) {
   return new Point(x, y);
 }
 
+// Scales from output canvas system (rel) to cartesian system (abs)
+// Does not necessarily convert coordinates from canvas to absolute system!
 function convertRelToAbsPoint(point) {
   var x = point.x / canvas.width * x_width;
   var y = point.y / canvas.height * y_height * -1.0;
@@ -176,6 +205,7 @@ function convertRelToAbsPoint(point) {
   return new Point(x, y);
 }
 
+// Convenience function for drawing line
 function drawLine(p1, p2, width, color) {
   var conv_p1 = convertAbsToRelPoint(p1);
   var conv_p2 = convertAbsToRelPoint(p2);
@@ -188,6 +218,7 @@ function drawLine(p1, p2, width, color) {
   context.stroke();
 }
 
+// Convenience function for drawing line
 function drawCircle(point, radius, color) {
   context.fillStyle = color;
   var conv_point = convertAbsToRelPoint(point);
