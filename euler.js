@@ -171,21 +171,21 @@ function drawCanvas() {
 
   // Center connectors and triangle sides
   for(var i = 0; i < 3; i++) {
-    drawLine(coords[i], coords[(i + 1) % 3], 4, "#90C3D4");
+    drawLine(coords[i], coords[(i + 1) % 3], 4, "#57B4D4");
     drawLine(coords[i], orthoCenter, 1, "#A1D490");
-    drawLine(coords[i], circmCenter, 1, "#D4A190");
-    drawLine(coords[i], cntrdCenter, 1, "#C390D4");
+    drawLine(coords[i], circmCenter, 1, "#BD4F28");
+    drawLine(coords[i], cntrdCenter, 1, "#9A4FC9");
   }
   // Draw vertices on top
   for(var i = 0; i < 3; i++) {
     drawCircle(coords[i], vertRadius + 2, "#666");
-    drawCircle(coords[i], vertRadius, "#90C3D4");
+    drawCircle(coords[i], vertRadius, "#57B4D4");
   }
 
   // Draw centers on very top
-  drawCircle(orthoCenter, nodeRadius, "#A1D490");
-  drawCircle(circmCenter, nodeRadius, "#D4A190");
-  drawCircle(cntrdCenter, nodeRadius, "#C390D4");
+  drawCircle(orthoCenter, nodeRadius, "#20AB43");
+  drawCircle(circmCenter, nodeRadius, "#BD4F28");
+  drawCircle(cntrdCenter, nodeRadius, "#9A4FC9");
 }
 
 // Converts from cartesian system (abs) to output canvas system (rel)
